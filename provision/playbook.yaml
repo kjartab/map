@@ -1,0 +1,43 @@
+---
+- name: install elasticsearch python loading apps
+  hosts: localhost
+  connection: local
+  remote_user: vagrant
+  become: yes
+
+  pre_tasks:
+    
+    - name: apt get update
+      apt: update_cache=yes
+
+    - name: Add repository
+      apt_repository: repo='deb http://apt.postgresql.org/pub/repos/apt trusty-pgdg main' state=present
+
+    - name: Add key
+      apt_key: url=http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc state=present
+
+    - name: install packages
+      apt: name={{item}} state=present
+      with_items:
+        - git
+        - postgresql-9.5-postgis-2.2 
+        - pgadmin3 
+        - postgresql-contrib-9.5
+        - postgresql-server-dev-9.5
+        - osm2pgsql
+        - unzip
+
+    - unarchive: src=https://github.com/tilezen/vector-datasource/archive/master.zip dest=/vagrant copy=no 
+    # - git: repo=https://github.com/tilezen/vector-datasource dest=/vagrant/vector-datasource
+
+    - name: Get bpf for Trondheim
+      get_url: src=https://s3.amazonaws.com/metro-extracts.mapzen.com/trondheim_norway.osm.pbf
+
+    # osm2pgsql -s -C 1024 -S vector-datasource/osm2pgsql.style -k trondheim_norway.osm.pbf  -d osm -H localhost
+
+    
+    # cd vector-datasource/data
+    # ./add-external-data.sh -d osm
+    # ls *.zip | xargs -n1 unzip
+    # ./shp2pgsql.sh | psql -d osm
+    # ./perform-sql-updates.sh -d osm
