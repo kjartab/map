@@ -1,6 +1,6 @@
 ---
 - name: install elasticsearch python loading apps
-  hosts: localhost
+  hosts: all
   connection: local
   remote_user: vagrant
   become: yes
@@ -11,7 +11,10 @@
       apt: update_cache=yes
 
     - name: Add repository
-      apt_repository: repo='deb http://apt.postgresql.org/pub/repos/apt trusty-pgdg main' state=present
+      apt_repository: repo='deb http://apt.postgresql.org/pub/repos/apt xenial-pgdg main' state=present
+
+    - name: Add repository
+      apt_repository: repo='deb http://apt.postgresql.org/pub/repos/apt trusty-pgdg main' state=absent
 
     - name: Add key
       apt_key: url=http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc state=present
@@ -28,7 +31,7 @@
         - unzip
 
     - unarchive: src=https://github.com/tilezen/vector-datasource/archive/master.zip dest=/vagrant copy=no 
-    # - git: repo=https://github.com/tilezen/vector-datasource dest=/vagrant/vector-datasource
+    - git: repo=https://github.com/tilezen/vector-datasource dest=/vagrant/vector-datasource
 
     - name: Get bpf for Trondheim
       get_url: src=https://s3.amazonaws.com/metro-extracts.mapzen.com/trondheim_norway.osm.pbf

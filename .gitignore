@@ -3,3 +3,4 @@ vector-datasource/
 data/
 *.pbf
 *.log
+playbook.retry
