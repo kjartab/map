@@ -1,5 +1,6 @@
 .vagrant/
 vector-datasource/
+venv/
 data/
 *.pbf
 *.log
