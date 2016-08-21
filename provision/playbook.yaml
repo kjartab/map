@@ -4,7 +4,8 @@
   connection: local
   remote_user: vagrant
   become: yes
-
+  vars:
+    pbf_file: /vagrant/trondheim_norway.osm.pbf
   pre_tasks:
     
     - name: apt get update
@@ -30,12 +31,92 @@
         - osm2pgsql
         - unzip
 
-    - unarchive: src=https://github.com/tilezen/vector-datasource/archive/master.zip dest=/vagrant copy=no 
+#    - unarchive: src=https://github.com/tilezen/vector-datasource/archive/master.zip dest=/vagrant copy=no 
+    
     - git: repo=https://github.com/tilezen/vector-datasource dest=/vagrant/vector-datasource
 
-    - name: Get bpf for Trondheim
-      get_url: src=https://s3.amazonaws.com/metro-extracts.mapzen.com/trondheim_norway.osm.pbf
+    - stat: path=/vagrant/trondheim_norway.osm.pbf 
+      register: res
 
+    - stat: path=/vagrant/new-york_new-york.osm.pbf 
+      register: nyres
+
+    - name: Get bpf for Trondheim
+      get_url: url=https://s3.amazonaws.com/metro-extracts.mapzen.com/trondheim_norway.osm.pbf dest={{pbf_file}}
+      when: res.stat.exists == False
+
+    - name: Get pbf for New York
+      get_url: url=https://s3.amazonaws.com/metro-extracts.mapzen.com/new-york_new-york.osm.pbf dest=/vagrant/new-york_new-york.osm.pbf
+
+      when: nyres.stat.exists == False
+
+    - apt: name=python-pip
+
+    - pip: name=psycopg2
+
+    - postgresql_db: name=osm 
+                 encoding='UTF-8'
+                 lc_collate='nb_NO.UTF-8'
+                 lc_ctype='nb_NO.UTF-8'
+                 template='template0'
+      become_user: postgres
+
+    - postgresql_user: db=osm name=osmuser password=osm priv=ALL state=present
+      become_user: postgres
+
+
+    - postgresql_ext: name={{item}} db=osm
+      with_items:
+        - postgis
+        - hstore
+      become_user: postgres
+
+
+   # - shell: "python /vagrant/vector-datasource/data/bootstrap.py"
+   # - shell: "make -f Makefile-import-data"
+   # - shell: "export PGPASSWORD=osm ./import-shapefiles.sh | psql -d osm -U osmuser"
+   # - shell: "export PGPASSWORD=osm ./perform-sql-updates.sh -d osm -U osmuser"
+   # - shell: "make -f Makefile-import-data clean"
+
+
+    - apt: name={{item}} state=present
+      with_items:
+        - build-essential
+        - autoconf
+        - libtool
+        - pkg-config
+        - python-dev 
+        - python-virtualenv 
+        - libgeos-dev 
+        - libpq-dev 
+        - python-pip 
+        - python-pil 
+        - libmapnik3.0 
+        - libmapnik-dev 
+        - mapnik-utils 
+        - python-mapnik
+
+    - git: repo=https://github.com/mapzen/tileserver.git dest=/vagrant/tilserver
+
+    - pip: requirements=/vagrant/tileserver/requirements.txt virtualenv=/vagrant/venv
+
+#    - shell: source /vagrant/venv/bin/activate &&   
+#pip install -U -r tileserver/requirements.txt
+#python tileserver/setup.py develop
+
+
+
+
+
+
+
+
+
+    #- shell: "osm2pgsql -s -C 1024 -S vector-datasource/osm2pgsql.style -j {{pbf_file}} -d osm -H localhost"
+    #  become_user: postgres
+
+
+      #osm2pgsql -s -C 1024 -S vector-datasource/osm2pgsql.style -j /vagrant/trondheim_norway.osm.pbf  -d osm -H localhost
     # osm2pgsql -s -C 1024 -S vector-datasource/osm2pgsql.style -k trondheim_norway.osm.pbf  -d osm -H localhost
 
     

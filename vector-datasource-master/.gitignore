@@ -1,0 +1,24 @@
+*.local.cfg
+cache
+.DS_Store
+
+# file output when tests fail
+test.log
+
+# editor temporaries
+*~
+
+# downloaded shapefiles
+data/*.shp
+data/*.cpg
+data/*.dbf
+data/*.prj
+data/*.shx
+
+# python compiled bytecode and development files
+*.pyc
+vector_datasource.egg-info/
+
+data/Makefile-import-data
+data/Makefile-prepare-data
+data/import-shapefiles.sh
